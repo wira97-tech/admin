@@ -33,10 +33,7 @@ interface InvoiceWithClient {
   };
 }
 
-interface InvoiceItemRecord {
-  description: string;
-  amount: number;
-}
+
 
 
 

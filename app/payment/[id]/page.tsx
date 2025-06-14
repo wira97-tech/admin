@@ -40,7 +40,6 @@ interface MidtransResult {
   transaction_status: string;
   fraud_status?: string;
   status_message?: string;
-  [key: string]: any; 
 }
 
 
