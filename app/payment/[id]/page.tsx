@@ -5,16 +5,52 @@ import { supabase } from "@/lib/supabase";
 
 declare global {
   interface Window {
-    snap: any;
+    snap: {
+      pay: (
+        token: string,
+        callbacks: {
+          onSuccess?: (result: MidtransResult) => void;
+          onPending?: (result: MidtransResult) => void;
+          onError?: (result: MidtransResult) => void;
+          onClose?: () => void;
+        }
+      ) => void;
+    };
   }
 }
+
+
+interface InvoiceWithClient {
+  id: string;
+  client_id: string;
+  date: string;
+  total: number;
+  status: "paid" | "unpaid";
+  clients?: {
+    name: string;
+  };
+}
+
+interface MidtransResult {
+  transaction_id: string;
+  order_id: string;
+  gross_amount: string;
+  payment_type: string;
+  transaction_time: string;
+  transaction_status: string;
+  fraud_status?: string;
+  status_message?: string;
+  [key: string]: any; 
+}
+
+
 
 export default function PaymentPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [invoice, setInvoice] = useState<any>(null);
+  const [invoice, setInvoice] = useState<InvoiceWithClient | null>(null);
   const [loading, setLoading] = useState(true);
   const { id } = use(params); // unwrap promise
 
@@ -52,6 +88,7 @@ export default function PaymentPage({
   }, []);
 
   const handlePayment = async () => {
+    if (!invoice) return;
     try {
       const res = await fetch(`/api/payment?id=${invoice.id}`);
       const data = await res.json();
@@ -64,7 +101,7 @@ export default function PaymentPage({
       }
 
       window.snap.pay(data.token, {
-        onSuccess: async function (result: any) {
+        onSuccess: async function (result: MidtransResult) {
           console.log("Pembayaran sukses", result);
 
           // Update status invoice ke "paid"
@@ -86,10 +123,10 @@ export default function PaymentPage({
             alert("Pembayaran berhasil tapi gagal update status.");
           }
         },
-        onPending: function (result: any) {
+        onPending: function (result: MidtransResult) {
           console.log("Menunggu pembayaran", result);
         },
-        onError: function (result: any) {
+        onError: function (result: MidtransResult) {
           console.log("Pembayaran gagal", result);
           alert("Terjadi kesalahan saat pembayaran.");
         },

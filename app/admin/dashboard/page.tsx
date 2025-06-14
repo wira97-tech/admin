@@ -5,9 +5,25 @@ import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
 import AuthGuard from "../../../components/AuthGuard";
 
+interface Project {
+  name: string;
+}
+
+interface Client {
+  id: string;
+  name: string;
+  projects: Project[];
+}
+
+interface Invoice {
+  status: "paid" | "unpaid";
+  amount: number;
+}
+
+
 export default function DashboardPage() {
   const [summary, setSummary] = useState({ total: 0, paid: 0, unpaid: 0 });
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const router = useRouter();
 
   const logout = async () => {
@@ -21,7 +37,7 @@ export default function DashboardPage() {
       let total = 0,
         paid = 0,
         unpaid = 0;
-      data?.forEach((inv: any) => {
+      data?.forEach((inv: Invoice) => {
         total += inv.amount;
         if (inv.status === "paid") paid += inv.amount;
         else unpaid += inv.amount;
@@ -98,7 +114,7 @@ export default function DashboardPage() {
                 <div className="font-medium text-green-700">{client.name}</div>
                 {client.projects.length > 0 ? (
                   <ul className="text-sm text-gray-600 list-disc ml-5 mt-1">
-                    {client.projects.slice(0, 3).map((p: any, idx: number) => (
+                    {client.projects.slice(0, 3).map((p: Project, idx: number) => (
                       <li key={idx}>{p.name}</li>
                     ))}
                   </ul>

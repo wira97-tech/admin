@@ -22,6 +22,24 @@ interface ConfirmDialogProps {
   loading: boolean;
 }
 
+interface InvoiceWithClient {
+  id: string;
+  client_id: string;
+  date: string;
+  total: number;
+  status: "paid" | "unpaid";
+  clients?: {
+    name: string;
+  };
+}
+
+interface InvoiceItemRecord {
+  description: string;
+  amount: number;
+}
+
+
+
 function ConfirmDialog({ message, onConfirm, onCancel, loading }: ConfirmDialogProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -52,7 +70,7 @@ export default function InvoicesPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [items, setItems] = useState<InvoiceItem[]>([{ description: "", amount: 0 }]);
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceWithClient[]>([]);
   const [confirmDelete, setConfirmDelete] = useState<null | string>(null);
   const [loading, setLoading] = useState(false);
 
@@ -142,7 +160,7 @@ export default function InvoicesPage() {
     fetchInvoices();
   };
 
-  const generatePDF = async (invoice: any) => {
+  const generatePDF = async (invoice: InvoiceWithClient) => {
     const { data: items } = await supabase
       .from("invoice_items")
       .select("description, amount")
@@ -174,7 +192,7 @@ export default function InvoicesPage() {
           `Rp ${item.amount}`,
         ]),
       });
-      const finalY = (doc as any).lastAutoTable?.finalY || 78;
+       const finalY = (doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 78;
       doc.text(`Total: Rp ${invoice.total}`, 14, finalY + 10);
 
       const paymentUrl = invoice.status === 'paid'

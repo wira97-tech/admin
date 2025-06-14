@@ -4,10 +4,20 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
+interface Invoice {
+  id: string;
+  total: number;
+  status: 'paid' | 'unpaid';
+  date: string;
+  client_id: string;
+  clients?: {
+    name: string;
+  };
+}
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
-  const [invoice, setInvoice] = useState<any>(null);
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
 
   useEffect(() => {
     const fetchInvoice = async () => {
