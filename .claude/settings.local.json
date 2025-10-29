@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run build)",
+      "Bash(npm run dev:*)",
+      "Read(//Users/wira/.config/**)",
+      "Read(//Users/wira/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

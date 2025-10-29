@@ -10,7 +10,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) router.push('/admin/login')
     })
-  }, [])
+  }, [router])
 
   return <>{children}</>
 }
