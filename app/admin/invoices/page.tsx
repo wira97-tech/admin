@@ -199,71 +199,207 @@ export default function InvoicesPage() {
         .eq("invoice_id", invoice.id);
 
       const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
 
-      // Add company logo
-      const imgData = "/logo.jpeg";
-      const image = new Image();
-      image.src = imgData;
-      image.onload = () => {
-        doc.addImage(image, "JPEG", 150, 10, 40, 40);
+      // Define colors
+      const primaryColor = [16, 185, 129]; // green-500
+      const lightGray = [245, 245, 245]; // gray-100
+      const darkGray = [31, 41, 55]; // gray-800
 
-        // Invoice header
-        doc.setFontSize(20);
-        doc.text("INVOICE", 14, 18);
-        doc.setFontSize(12);
-        doc.text(`INV/${invoice.id}`, 14, 28);
-        doc.text(`Client: ${invoice.clients?.name || ""}`, 14, 38);
+      // Header Section with Background
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, pageWidth, 60, 'F');
 
-        // Date
-        const date = new Date(invoice.date);
-        const formattedDate = date.toLocaleDateString('id-ID', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-        doc.text(`Date: ${formattedDate}`, 14, 48);
+      // Company Info (Left side of header)
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont(undefined, 'bold');
+      doc.text("INVOICE", 14, 25);
 
-        // Table
-        autoTable(doc, {
-          startY: 58,
-          head: [["Description", "Amount"]],
-          body: (items || []).map((item) => [
-            item.description || "",
-            `Rp ${item.amount.toLocaleString('id-ID')}`,
-          ]),
-          theme: 'grid',
-          styles: { fontSize: 10 },
-          headStyles: { fillColor: [16, 185, 129] },
-        });
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text("Akusara Digital Agency", 14, 35);
+      doc.text("Jl. Sesetan No.1 Denpasar, Bali Indonesia", 14, 42);
+      doc.text("Email: hello@akusara.com | Phone: +62 812-3456-7890", 14, 49);
 
-        const finalY = (doc as any).lastAutoTable?.finalY ?? 78;
+      // Invoice Details (Right side of header)
+      doc.setFontSize(12);
+      doc.text(`Invoice #: INV-${invoice.id}`, 120, 25);
+      doc.text(`Date: ${new Date(invoice.date).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })}`, 120, 35);
 
-        // Total
-        doc.setFontSize(12);
-        doc.text(`Total: Rp ${invoice.total.toLocaleString('id-ID')}`, 14, finalY + 10);
+      // Status Badge
+      const statusX = 120;
+      const statusY = 45;
+      const statusWidth = 30;
+      const statusHeight = 8;
 
-        // Payment link
-        const paymentUrl = invoice.status === 'paid'
-          ? `${window.location.origin}/payment/success?id=${invoice.id}`
-          : `${window.location.origin}/payment/${invoice.id}`;
+      if (invoice.status === 'paid') {
+        doc.setFillColor(34, 197, 94); // green-500
+        doc.rect(statusX, statusY, statusWidth, statusHeight, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.text('PAID', statusX + 15, statusY + 5, { align: 'center' });
+      } else {
+        doc.setFillColor(251, 146, 60); // orange-400
+        doc.rect(statusX, statusY, statusWidth, statusHeight, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.text('PENDING', statusX + 15, statusY + 5, { align: 'center' });
+      }
 
-        doc.textWithLink(
-          invoice.status === 'paid' ? 'Pembayaran berhasil' : 'Bayar sekarang',
-          14,
-          finalY + 20,
-          { url: paymentUrl }
-        );
+      // Bill To Section
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text("Bill To:", 14, 80);
 
-        // Footer
-        doc.setDrawColor(0);
-        doc.setLineWidth(0.5);
-        doc.line(14, 270, 196, 270);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'normal');
+      doc.text(invoice.clients?.name || 'Unknown Client', 14, 88);
+      doc.text("Client of Akusara Digital Agency", 14, 95);
 
-        doc.setFontSize(10);
-        doc.text("Akusara Digital Agency", 14, 278);
-        doc.text("Jl. Sesetan No.1 Denpasar, Bali Indonesia", 14, 284);
-        doc.save(`invoice-${invoice.id}.pdf`);
-      };
+      // Invoice Items Table
+      const tableStartY = 110;
+
+      autoTable(doc, {
+        startY: tableStartY,
+        head: [
+          [
+            { content: 'Description', styles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' } },
+            { content: 'Quantity', styles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' }, halign: 'center' },
+            { content: 'Unit Price', styles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' }, halign: 'right' },
+            { content: 'Amount', styles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' }, halign: 'right' }
+          ]
+        ],
+        body: (items || []).map((item, index) => [
+          item.description || "",
+          "1", // Assuming quantity is always 1 for now
+          `Rp ${item.amount.toLocaleString('id-ID')}`,
+          `Rp ${item.amount.toLocaleString('id-ID')}`
+        ]),
+        theme: 'grid',
+        styles: {
+          fontSize: 10,
+          cellPadding: 8,
+          lineColor: [200, 200, 200]
+        },
+        alternateRowStyles: {
+          fillColor: lightGray
+        },
+        headStyles: {
+          fillColor: primaryColor,
+          textColor: 255,
+          fontStyle: 'bold',
+          cellPadding: 10
+        },
+        columnStyles: {
+          0: { cellWidth: 'auto' },
+          1: { cellWidth: 30, halign: 'center' },
+          2: { cellWidth: 50, halign: 'right' },
+          3: { cellWidth: 50, halign: 'right' }
+        }
+      });
+
+      const finalY = (doc as any).lastAutoTable?.finalY ?? tableStartY + 50;
+
+      // Summary Section
+      const summaryStartY = finalY + 20;
+
+      // Summary Box
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.rect(130, summaryStartY - 10, 60, 80);
+
+      // Summary Items
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+
+      const subtotal = invoice.total;
+      const tax = 0; // You can calculate tax if needed
+      const total = subtotal + tax;
+
+      doc.text("Subtotal:", 135, summaryStartY);
+      doc.text(`Rp ${subtotal.toLocaleString('id-ID')}`, 175, summaryStartY, { align: 'right' });
+
+      if (tax > 0) {
+        doc.text("Tax (10%):", 135, summaryStartY + 12);
+        doc.text(`Rp ${tax.toLocaleString('id-ID')}`, 175, summaryStartY + 12, { align: 'right' });
+      }
+
+      // Total Line
+      doc.setDrawColor(...primaryColor);
+      doc.setLineWidth(1);
+      doc.line(135, summaryStartY + 20, 185, summaryStartY + 20);
+
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text("TOTAL:", 135, summaryStartY + 32);
+      doc.text(`Rp ${total.toLocaleString('id-ID')}`, 175, summaryStartY + 32, { align: 'right' });
+
+      // Payment Information
+      const paymentStartY = summaryStartY + 60;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text("Payment Information:", 14, paymentStartY);
+
+      doc.setFont(undefined, 'normal');
+      doc.text("Bank: BCA (Bank Central Asia)", 14, paymentStartY + 8);
+      doc.text("Account Name: Akusara Digital Agency", 14, paymentStartY + 16);
+      doc.text("Account Number: 123-456-7890", 14, paymentStartY + 24);
+
+      // Payment Status
+      if (invoice.status === 'paid') {
+        doc.setTextColor(34, 197, 94); // green
+        doc.setFont(undefined, 'bold');
+        doc.text("✓ Payment Completed", 14, paymentStartY + 36);
+
+        if (invoice.paid_at) {
+          doc.setFont(undefined, 'normal');
+          doc.text(`Paid on: ${new Date(invoice.paid_at).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          })}`, 14, paymentStartY + 44);
+        }
+      } else {
+        doc.setTextColor(251, 146, 60); // orange
+        doc.setFont(undefined, 'bold');
+        doc.text("⏳ Awaiting Payment", 14, paymentStartY + 36);
+
+        // Payment Link
+        const paymentUrl = `${window.location.origin}/payment/${invoice.id}`;
+        doc.setTextColor(16, 185, 129); // green
+        doc.setFont(undefined, 'normal');
+        doc.textWithLink('Click here to pay', 14, paymentStartY + 44, { url: paymentUrl });
+      }
+
+      // Footer
+      const footerY = 270;
+
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(14, footerY, pageWidth - 14, footerY);
+
+      doc.setTextColor(100, 100, 100);
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'normal');
+      doc.text("Thank you for your business!", 14, footerY + 8);
+      doc.text("This is a computer-generated invoice and does not require a signature.", 14, footerY + 14);
+      doc.text(`Page 1 of 1`, pageWidth - 14, footerY + 14, { align: 'right' });
+
+      // Add page border
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(1);
+      doc.rect(5, 5, pageWidth - 10, 287);
+
+      doc.save(`invoice-${invoice.id}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Gagal generate PDF. Silakan coba lagi.");

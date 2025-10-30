@@ -5,7 +5,8 @@
       "Bash(npm run build)",
       "Bash(npm run dev:*)",
       "Read(//Users/wira/.config/**)",
-      "Read(//Users/wira/**)"
+      "Read(//Users/wira/**)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
