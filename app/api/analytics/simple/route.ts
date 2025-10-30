@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse, NextRequest } from 'next/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 // Create Supabase client for API routes
-const supabase = createClient(
+const supabase = createSupabaseClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
